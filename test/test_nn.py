@@ -13431,6 +13431,19 @@ class TestNNDeviceType(NNTestCase):
         clip_grad_value_([p2], clip_value, foreach=foreach)
         self.assertEqual(p1.grad, p2.grad)
 
+    def test_clip_grad_negative_threshold(self, device):
+        p = torch.ones(3, device=device)
+        p.grad = torch.full((3,), 4.0, device=device)
+        total_norm = torch.tensor(8.0, device=device)
+        for bad in (-1.0, float("nan")):
+            with self.assertRaisesRegex(ValueError, "max_norm must be non-negative"):
+                clip_grad_norm_(p, bad)
+            with self.assertRaisesRegex(ValueError, "max_norm must be non-negative"):
+                clip_grads_with_norm_(p, bad, total_norm)
+            with self.assertRaisesRegex(ValueError, "clip_value must be non-negative"):
+                clip_grad_value_(p, bad)
+        self.assertEqual(p.grad, torch.full((3,), 4.0, device=device))
+
     @parametrize_test('foreach', (None, False))
     @parametrize_test('norm_type', (1.0, 2.0))
     def test_get_total_norm_dtype(self, norm_type, foreach, device):

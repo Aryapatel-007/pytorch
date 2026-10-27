@@ -166,6 +166,9 @@ def _clip_grads_with_norm_(
         parameters = [parameters]
     grads = [p.grad for p in parameters if p.grad is not None]
     max_norm = float(max_norm)
+    # A negative max_norm makes clip_coef negative and silently reverses every gradient.
+    if not max_norm >= 0:
+        raise ValueError(f"max_norm must be non-negative, but got {max_norm}")
     if len(grads) == 0:
         return
     grouped_grads: dict[
@@ -288,6 +291,8 @@ def clip_grad_value_(
     if isinstance(parameters, torch.Tensor):
         parameters = [parameters]
     clip_value = float(clip_value)
+    if not clip_value >= 0:
+        raise ValueError(f"clip_value must be non-negative, but got {clip_value}")
 
     grads = [p.grad for p in parameters if p.grad is not None]
     # pyrefly: ignore [bad-argument-type]
